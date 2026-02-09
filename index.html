@@ -267,12 +267,40 @@
             alert("送信に失敗しました。ネットワークを確認してください。");
         }
     }
+    async function loadTradeData() {
+        console.log("データを更新中..."); 
+        try {
+            const res = await fetch(GAS_URL);
+            const data = await res.json();
+        
+            const tbody = document.getElementById('trade-tbody');
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">商品なし</td></tr>';
+            } else {
+                tbody.innerHTML = data.map(item => `
+                    <tr>
+                        <td><strong>${item.name}</strong></td>
+                        <td class="price">${item.price} KD</td>
+                        <td class="coordinate">${item.coords}</td>
+                        <td>${item.stock}</td>
+                        <td class="seller-tag">${item.seller}</td>
+                    </tr>
+                `).join('');
+            }
 
+            if (typeof updateStats === 'function') updateStats(data);
+
+        } catch (e) {
+            console.error("更新失敗:", e);
+        }
+    }
     loadTradeData();
+    setInterval(loadTradeData, 30000);
 </script>
 
 </body>
 </html>
+
 
 
 

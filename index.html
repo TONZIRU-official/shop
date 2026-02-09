@@ -28,11 +28,7 @@
             padding: 20px;
         }
 
-        .header {
-            text-align: center;
-            padding: 20px 0 40px;
-        }
-
+        .header { text-align: center; padding: 20px 0 40px; }
         .header h1 {
             color: var(--mc-gold);
             font-size: 2.2rem;
@@ -40,7 +36,6 @@
             margin: 0;
             letter-spacing: 4px;
         }
-
         .header p { color: #666; font-size: 0.8rem; margin-top: 10px; }
 
         .main-container {
@@ -57,88 +52,35 @@
             padding: 25px;
             border-radius: 8px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin-bottom: 25px;
         }
 
-        h2 {
-            font-size: 1.1rem;
-            margin-top: 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        h2 { font-size: 1.1rem; margin-top: 0; display: flex; align-items: center; gap: 10px; }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
+        .stats-item { margin-bottom: 15px; }
+        .bar-bg { background: #000; border-radius: 10px; height: 12px; overflow: hidden; border: 1px solid #444; margin-top: 5px; }
+        .bar-fill { height: 100%; transition: width 0.8s ease-in-out; }
 
-        th {
-            text-align: left;
-            color: #888;
-            font-size: 0.75rem;
-            border-bottom: 2px solid #333;
-            padding: 10px;
-            text-transform: uppercase;
-        }
-
-        td {
-            padding: 14px 10px;
-            border-bottom: 1px solid #222;
-            font-size: 0.9rem;
-        }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; color: #888; font-size: 0.75rem; border-bottom: 2px solid #333; padding: 10px; text-transform: uppercase; }
+        td { padding: 14px 10px; border-bottom: 1px solid #222; font-size: 0.9rem; }
 
         .coordinate { color: var(--mc-aqua); font-weight: bold; }
         .price { color: var(--mc-green); font-weight: bold; }
         .seller-tag { color: #777; font-size: 0.8rem; }
 
-        .auth-panel {
-            border: 1px solid var(--mc-gold);
-            position: sticky;
-            top: 20px;
-        }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 20px;
-        }
-
-        input, select {
-            background: #000;
-            border: 1px solid #444;
-            color: #fff;
-            padding: 12px;
-            border-radius: 4px;
-            font-family: inherit;
-        }
-
+        .auth-panel { border: 1px solid var(--mc-gold); position: sticky; top: 20px; }
+        .input-group { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+        input, select { background: #000; border: 1px solid #444; color: #fff; padding: 12px; border-radius: 4px; font-family: inherit; }
         input:focus { border-color: var(--mc-gold); outline: none; }
-
         .btn-submit {
-            background: var(--mc-gold);
-            color: #000;
-            border: none;
-            padding: 15px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
-            transition: 0.2s;
-            text-transform: uppercase;
+            background: var(--mc-gold); color: #000; border: none; padding: 15px;
+            font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s; text-transform: uppercase;
         }
-
-        .btn-submit:hover {
-            filter: brightness(1.2);
-            box-shadow: 0 0 20px rgba(255, 170, 0, 0.4);
-        }
-
+        .btn-submit:hover { filter: brightness(1.2); box-shadow: 0 0 20px rgba(255, 170, 0, 0.4); }
         .divider { border: 0; border-top: 1px solid #333; margin: 10px 0; }
 
-        @media (max-width: 900px) {
-            .main-container { grid-template-columns: 1fr; }
-            .auth-panel { position: static; }
-        }
+        @media (max-width: 900px) { .main-container { grid-template-columns: 1fr; } .auth-panel { position: static; } }
     </style>
 </head>
 <body>
@@ -150,6 +92,13 @@
 
 <div class="main-container">
     <main>
+        <section id="stats-panel">
+            <h2 style="color: var(--mc-aqua);">📊 流通ステータスβ</h2>
+            <div id="stats-container">
+                <div style="text-align:center; color:#555;">統計データ抽出中...</div>
+            </div>
+        </section>
+
         <section>
             <h2 style="color: var(--mc-aqua);"><span>§b</span> 商品情報</h2>
             <table>
@@ -193,27 +142,28 @@
 <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzngZ12yBdeHcrjQ4M976_cRCX0IeKyVFIFw7byvG0ZlAtaiKQpzP0F7mhGO2MBbl2p/exec";
     const CITIZENS = [
-            "nyokki1958", "daran0289", "maikuraumai", "kenti7599", "SoftMusic096337",
-            "TempOwl79825726", "SlightSum8834", "yutakabicchi", "shotaro shizoka", "Tankichi1",
-            "Sora3055", "ShabbyRuby54641", "yuisyunn", "kiri5620", "xRqmuzzzL YT",
-            "WoodedTuba82716", "atatan3", "Ezipt3697", "y3ur1lala", "Harukaze4006",
-            "RinRin404040", "takubon0114", "ZeroPlayer1396", "K1hoOIE", "Hikaru bp",
-            "kemi114", "PaltryCow795892", "haruson7856", "BleakDread23911", "FleeingRat43895",
-            "Nnz0313", "shuji12324", "haruhi8395", "utte75877", "InlandVeil18339",
-            "BlahColt4486", "kitune0510", "MIYUKI20107577", "HardPigeon4047", "PairedLand4913",
-            "hiyorispyair", "DueMite4591", "yukiharu518817", "kouk9690", "Ram1117enter",
-            "GCsTanzanite", "haha70473", "Raika6605", "hagetarouSP", "tesuteru",
-            "tantanmendesu29", "Commander129632", "RINEshinki3030", "kanade0905", "mike32Ch",
-            "xTZxJP"
-        ];
+        "nyokki1958", "daran0289", "maikuraumai", "kenti7599", "SoftMusic096337",
+        "TempOwl79825726", "SlightSum8834", "yutakabicchi", "shotaro shizoka", "Tankichi1",
+        "Sora3055", "ShabbyRuby54641", "yuisyunn", "kiri5620", "xRqmuzzzL YT",
+        "WoodedTuba82716", "atatan3", "Ezipt3697", "y3ur1lala", "Harukaze4006",
+        "RinRin404040", "takubon0114", "ZeroPlayer1396", "K1hoOIE", "Hikaru bp",
+        "kemi114", "PaltryCow795892", "haruson7856", "BleakDread23911", "FleeingRat43895",
+        "Nnz0313", "shuji12324", "haruhi8395", "utte75877", "InlandVeil18339",
+        "BlahColt4486", "kitune0510", "MIYUKI20107577", "HardPigeon4047", "PairedLand4913",
+        "hiyorispyair", "DueMite4591", "yukiharu518817", "kouk9690", "Ram1117enter",
+        "GCsTanzanite", "haha70473", "Raika6605", "hagetarouSP", "tesuteru",
+        "tantanmendesu29", "Commander129632", "RINEshinki3030", "kanade0905", "mike32Ch", "xTZxJP"
+    ];
 
     async function loadTradeData() {
         try {
             const res = await fetch(GAS_URL);
             const data = await res.json();
             const tbody = document.getElementById('trade-tbody');
+            
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">現在、登録されている商品はありません。</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">商品なし</td></tr>';
+                updateStats([]);
                 return;
             }
 
@@ -226,9 +176,37 @@
                     <td class="seller-tag">${item.seller}</td>
                 </tr>
             `).join('');
+
+            updateStats(data);
         } catch (e) {
-            document.getElementById('trade-tbody').innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--mc-red);">通信エラー：政府サーバーに接続できません。</td></tr>';
+            console.error(e);
         }
+    }
+
+    function updateStats(data) {
+        const container = document.getElementById('stats-container');
+        const total = data.length;
+        const counts = {
+            "在庫あり": { n: 0, c: "#3cfb00" },
+            "在庫僅少": { n: 0, c: "#ffaa00" },
+            "受注生産": { n: 0, c: "#55ffff" }
+        };
+        data.forEach(d => { if(counts[d.stock]) counts[d.stock].n++; });
+
+        container.innerHTML = Object.keys(counts).map(key => {
+            const val = counts[key];
+            const prc = total > 0 ? Math.round((val.n / total) * 100) : 0;
+            return `
+                <div class="stats-item">
+                    <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+                        <span>${key}</span><span>${val.n}件 (${prc}%)</span>
+                    </div>
+                    <div class="bar-bg">
+                        <div class="bar-fill" style="width:${prc}%; background:${val.c}; box-shadow:0 0 10px ${val.c}66;"></div>
+                    </div>
+                </div>
+            `;
+        }).join('');
     }
 
     async function submitTrade() {
@@ -236,7 +214,7 @@
         const pass = document.getElementById('id-auth-pass').value;
 
         if (!CITIZENS.includes(mcid)) {
-            alert("国民リストに照合できません。MCIDを確認してください。");
+            alert("国民リストに照合できません。");
             return;
         }
 
@@ -258,51 +236,17 @@
             const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify(payload) });
             const result = await res.json();
             if (result.status === "success") {
-                alert("商品情報が完了しました。");
-                location.reload();
+                alert("登録完了しました！");
+                loadTradeData(); 
             } else {
                 alert("エラー: " + result.message);
             }
-        } catch (e) {
-            alert("送信に失敗しました。ネットワークを確認してください。");
-        }
+        } catch (e) { alert("送信失敗しました。"); }
     }
-    async function loadTradeData() {
-        console.log("データを更新中..."); 
-        try {
-            const res = await fetch(GAS_URL);
-            const data = await res.json();
-        
-            const tbody = document.getElementById('trade-tbody');
-            if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">商品なし</td></tr>';
-            } else {
-                tbody.innerHTML = data.map(item => `
-                    <tr>
-                        <td><strong>${item.name}</strong></td>
-                        <td class="price">${item.price} KD</td>
-                        <td class="coordinate">${item.coords}</td>
-                        <td>${item.stock}</td>
-                        <td class="seller-tag">${item.seller}</td>
-                    </tr>
-                `).join('');
-            }
 
-            if (typeof updateStats === 'function') updateStats(data);
-
-        } catch (e) {
-            console.error("更新失敗:", e);
-        }
-    }
     loadTradeData();
     setInterval(loadTradeData, 30000);
 </script>
 
 </body>
 </html>
-
-
-
-
-
-

@@ -175,87 +175,52 @@
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzngZ12yBdeHcrjQ4M976_cRCX0IeKyVFIFw7byvG0ZlAtaiKQpzP0F7mhGO2MBbl2p/exec";
     const CITIZENS = ["nyokki1958", "daran0289", "maikuraumai", "kenti7599", "SoftMusic096337", "TempOwl79825726", "SlightSum8834", "yutakabicchi", "shotaro shizoka", "Tankichi1", "Sora3055", "ShabbyRuby54641", "yuisyunn", "kiri5620", "xRqmuzzzL YT", "WoodedTuba82716", "atatan3", "Ezipt3697", "y3ur1lala", "Harukaze4006", "RinRin404040", "takubon0114", "ZeroPlayer1396", "K1hoOIE", "Hikaru bp", "kemi114", "PaltryCow795892", "haruson7856", "BleakDread23911", "FleeingRat43895", "Nnz0313", "shuji12324", "haruhi8395", "utte75877", "InlandVeil18339", "BlahColt4486", "kitune0510", "MIYUKI20107577", "HardPigeon4047", "PairedLand4913", "hiyorispyair", "DueMite4591", "yukiharu518817", "kouk9690", "Ram1117enter", "GCsTanzanite", "haha70473", "Raika6605", "hagetarouSP", "tesuteru", "tantanmendesu29", "Commander129632", "RINEshinki3030", "kanade0905", "mike32Ch", "xTZxJP"];
 
-    let currentData = [];
+    let currentData = { products: [], orders: [] }; 
     let currentUser = JSON.parse(localStorage.getItem('daigoshu_user')) || null;
 
-    function checkAuth() {
-        const loginForm = document.getElementById('login-form');
-        const dashboard = document.getElementById('user-dashboard');
-        if (currentUser) {
-            loginForm.style.display = 'none';
-            dashboard.style.display = 'block';
-            document.getElementById('welcome-msg').innerText = `ログイン中: ${currentUser.mcid}`;
-        } else {
-            loginForm.style.display = 'block';
-            dashboard.style.display = 'none';
-        }
-    }
-
-    function login() {
-        const mcid = document.getElementById('auth-mcid').value;
-        const pass = document.getElementById('id-auth-pass').value;
-        if (!CITIZENS.includes(mcid)) { alert("国民リストにありません"); return; }
-        if (!pass) { alert("パスワードを入力してください"); return; }
-        currentUser = { mcid, pass };
-        localStorage.setItem('daigoshu_user', JSON.stringify(currentUser));
-        checkAuth();
-    }
-
-    function logout() {
-        localStorage.removeItem('daigoshu_user');
-        currentUser = null;
-        checkAuth();
-    }
-
-    async function loadTradeData() {
+    async function placeOrder(seller, productName) {
+        const buyer = prompt("あなたのMCIDを入力してください（注文者名として記録されます）");
+        if (!buyer) return;
+        const payload = {
+            action: "placeOrder",
+            buyer: buyer,
+            seller: seller,
+            productName: productName,
+            timestamp: new Date().toLocaleString("ja-JP")
+        };
         try {
-            const res = await fetch(GAS_URL);
-            currentData = await res.json();
-            renderTable();
-            updateStats(currentData);
-        } catch (e) { console.error(e); }
+            const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify(payload) });
+            const result = await res.json();
+            if (result.status === "success") {
+                alert(productName + " の注文を送信しました！");
+                loadTradeData();
+            } else { alert("注文失敗: " + result.message); }
+        } catch (e) { alert("接続エラー"); }
     }
 
-    function renderTable() {
-        const tbody = document.getElementById('trade-tbody');
-        const search = document.getElementById('search-box').value.toLowerCase();
-        const sort = document.getElementById('sort-select').value;
-        let filtered = currentData.filter(d => d.name.toLowerCase().includes(search) || d.seller.toLowerCase().includes(search));
-        
-        if (sort === "price-asc") filtered.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
-        else if (sort === "price-desc") filtered.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
 
-        tbody.innerHTML = filtered.map(item => `
-            <tr>
-                <td><strong>${item.name}</strong></td>
-                <td class="price">${item.price} KD</td>
-                <td class="coordinate">${item.coords}</td>
-                <td>${item.stock}</td>
-                <td class="seller-tag">${item.seller}</td>
-                <td><button class="btn-order" onclick="openOrder('${item.seller}', '${item.name}', '${item.price}')">注文</button></td>
-            </tr>
+    function renderOrders() {
+        const container = document.getElementById('received-orders');
+        if (!currentUser || !container) return;
+        const myOrders = (currentData.orders || []).filter(order => order.seller === currentUser.mcid);
+        if (myOrders.length === 0) {
+            container.innerHTML = '<p style="font-size: 0.7rem; color: #666;">注文はありません。</p>';
+            return;
+        }
+        container.innerHTML = myOrders.map(order => `
+            <div class="order-item" style="background:#1a1a1a; padding:10px; margin-bottom:5px; border-left:3px solid #ffaa00;">
+                <div style="font-size:0.7rem; color:#888;">${order.timestamp}</div>
+                <div><b>${order.buyer}</b> から <b>${order.productName}</b></div>
+                <button onclick="deleteOrder('${order.id}')" style="color:#ff4444; background:none; border:none; cursor:pointer;">[完了して削除]</button>
+            </div>
         `).join('');
     }
 
-    function openOrder(s, n, p) {
-        const msg = `【注文】\n出品者: ${s}様\n商品: ${n}\n単価: ${p} KD\n購入希望です。`;
-        alert(msg);
-    }
-
-    function updateStats(data) {
-        const container = document.getElementById('stats-container');
-        const counts = { "在庫あり": { n: 0, c: "#3cfb00" }, "在庫僅少": { n: 0, c: "#ffaa00" }, "受注生産": { n: 0, c: "#55ffff" } };
-        data.forEach(d => { if(counts[d.stock]) counts[d.stock].n++; });
-        container.innerHTML = Object.keys(counts).map(key => {
-            const val = counts[key];
-            const prc = data.length > 0 ? Math.round((val.n / data.length) * 100) : 0;
-            return `<div class="stats-item"><span>${key} (${val.n}件)</span><div class="bar-bg"><div class="bar-fill" style="width:${prc}%; background:${val.c};"></div></div></div>`;
-        }).join('');
-    }
 
     async function submitTrade() {
         if (!currentUser) return;
         const payload = {
+            action: "updateProduct",
             seller: currentUser.mcid,
             password: currentUser.pass,
             name: document.getElementById('in-name').value,
@@ -272,10 +237,100 @@
         } catch (e) { alert("失敗"); }
     }
 
+
+    async function deleteOrder(orderId) {
+        if (!confirm("削除しますか？")) return;
+        const payload = {
+            action: "deleteOrder",
+            orderId: orderId,
+            seller: currentUser.mcid,
+            password: currentUser.pass
+        };
+        try {
+            const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify(payload) });
+            const result = await res.json();
+            if (result.status === "success") { loadTradeData(); }
+        } catch (e) { alert("削除失敗"); }
+    }
+
+
+    function checkAuth() {
+        const loginForm = document.getElementById('login-form');
+        const dashboard = document.getElementById('user-dashboard');
+        if (currentUser) {
+            loginForm.style.display = 'none';
+            dashboard.style.display = 'block';
+            document.getElementById('welcome-msg').innerText = `ログイン中: ${currentUser.mcid}`;
+            renderOrders();
+        } else {
+            loginForm.style.display = 'block';
+            dashboard.style.display = 'none';
+        }
+    }
+
+    function login() {
+        const mcid = document.getElementById('auth-mcid').value;
+        const pass = document.getElementById('id-auth-pass').value;
+        if (!CITIZENS.includes(mcid)) { alert("国民リストにありません"); return; }
+        currentUser = { mcid, pass };
+        localStorage.setItem('daigoshu_user', JSON.stringify(currentUser));
+        checkAuth();
+    }
+
+    function logout() {
+        localStorage.removeItem('daigoshu_user');
+        currentUser = null;
+        checkAuth();
+    }
+
+    async function loadTradeData() {
+        try {
+            const res = await fetch(GAS_URL);
+            const data = await res.json();
+            // GAS側のデータ構造（productsとorders）に合わせる
+            currentData.products = data.products || data;
+            currentData.orders = data.orders || [];
+            renderTable();
+            updateStats(currentData.products);
+            renderOrders();
+        } catch (e) { console.error(e); }
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('trade-tbody');
+        const search = document.getElementById('search-box').value.toLowerCase();
+        const sort = document.getElementById('sort-select').value;
+        let filtered = currentData.products.filter(d => d.name.toLowerCase().includes(search) || d.seller.toLowerCase().includes(search));
+        if (sort === "price-asc") filtered.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+        else if (sort === "price-desc") filtered.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+
+        tbody.innerHTML = filtered.map(item => `
+            <tr>
+                <td><strong>${item.name}</strong></td>
+                <td class="price">${item.price} KD</td>
+                <td class="coordinate">${item.coords}</td>
+                <td>${item.stock}</td>
+                <td class="seller-tag">${item.seller}</td>
+                <td><button class="btn-order" onclick="placeOrder('${item.seller}', '${item.name}')">注文</button></td>
+            </tr>
+        `).join('');
+    }
+
+    function updateStats(data) {
+        const container = document.getElementById('stats-container');
+        if(!container) return;
+        const counts = { "在庫あり": { n: 0, c: "#3cfb00" }, "在庫僅少": { n: 0, c: "#ffaa00" }, "受注生産": { n: 0, c: "#55ffff" } };
+        data.forEach(d => { if(counts[d.stock]) counts[d.stock].n++; });
+        container.innerHTML = Object.keys(counts).map(key => {
+            const val = counts[key];
+            const prc = data.length > 0 ? Math.round((val.n / data.length) * 100) : 0;
+            return `<div class="stats-item"><span>${key} (${val.n}件)</span><div class="bar-bg"><div class="bar-fill" style="width:${prc}%; background:${val.c};"></div></div></div>`;
+        }).join('');
+    }
+
     checkAuth();
     loadTradeData();
     setInterval(loadTradeData, 30000);
 </script>
-
-</body>
 </html>
+

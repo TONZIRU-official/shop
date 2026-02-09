@@ -2,10 +2,8 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="google-site-verification" content="SxzZn87uR4TBl9SPhOZBWG9xDWxWMQ-BYZpEGILwAwY" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>大豪州共和国 商品情報</title>
-    <meta name="description" content="大豪州共和国の商品情報ポータルサイトです。国民の出品情報をリアルタイムで公開中。">
     <style>
         :root {
             --mc-green: #3cfb00;
@@ -23,46 +21,26 @@
             background-size: 40px 40px;
             color: #eee;
             font-family: 'Consolas', 'Courier New', monospace;
-            margin: 0;
-            padding: 20px;
+            margin: 0; padding: 20px;
         }
 
         .header { text-align: center; padding: 20px 0 40px; }
-        .header h1 {
-            color: var(--mc-gold);
-            font-size: 2.2rem;
-            text-shadow: 0 0 15px var(--mc-gold);
-            margin: 0;
-            letter-spacing: 4px;
-        }
+        .header h1 { color: var(--mc-gold); font-size: 2.2rem; text-shadow: 0 0 15px var(--mc-gold); margin: 0; letter-spacing: 4px; }
 
-        .main-container {
-            display: grid;
-            grid-template-columns: 1fr 350px;
-            gap: 25px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+        .main-container { display: grid; grid-template-columns: 1fr 350px; gap: 25px; max-width: 1200px; margin: 0 auto; }
 
         section {
-            background: var(--panel-bg);
-            border: 1px solid #333;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            margin-bottom: 25px;
+            background: var(--panel-bg); border: 1px solid #333; padding: 25px;
+            border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 25px;
         }
 
-        h2 { font-size: 1.1rem; margin-top: 0; display: flex; align-items: center; gap: 10px; }
-
         .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        
         .stats-item { margin-bottom: 15px; }
         .bar-bg { background: #000; border-radius: 10px; height: 12px; overflow: hidden; border: 1px solid #444; margin-top: 5px; }
         .bar-fill { height: 100%; transition: width 0.8s ease-in-out; }
 
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; color: #888; font-size: 0.75rem; border-bottom: 2px solid #333; padding: 10px; text-transform: uppercase; }
+        th { text-align: left; color: #888; font-size: 0.75rem; border-bottom: 2px solid #333; padding: 10px; }
         td { padding: 14px 10px; border-bottom: 1px solid #222; font-size: 0.9rem; }
 
         .coordinate { color: var(--mc-aqua); font-weight: bold; }
@@ -70,13 +48,8 @@
         .seller-tag { color: #777; font-size: 0.8rem; }
 
         .btn-order {
-            background: transparent;
-            border: 1px solid var(--mc-aqua);
-            color: var(--mc-aqua);
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.75rem;
+            background: transparent; border: 1px solid var(--mc-aqua); color: var(--mc-aqua);
+            padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;
         }
         .btn-order:hover { background: var(--mc-aqua); color: #000; }
 
@@ -86,28 +59,21 @@
         
         .btn-submit {
             background: var(--mc-gold); color: #000; border: none; padding: 15px;
-            font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s; text-transform: uppercase;
+            font-weight: bold; cursor: pointer; transition: 0.2s; text-transform: uppercase;
         }
+        .btn-submit:disabled { background: #555; cursor: not-allowed; }
         
-        /* 注文一覧のスタイル */
         .order-list { margin-top: 20px; border-top: 1px solid #444; padding-top: 15px; }
         .order-item { background: #1a1a1a; padding: 10px; margin-bottom: 8px; border-left: 3px solid var(--mc-gold); font-size: 0.8rem; }
-
-        .btn-logout {
-            background: #ff4444; color: #fff; border: none; padding: 8px;
-            font-size: 0.7rem; cursor: pointer; border-radius: 4px; margin-top: 10px; width: 100%;
-        }
+        .btn-logout { background: #ff4444; color: #fff; border: none; padding: 8px; font-size: 0.7rem; cursor: pointer; width: 100%; margin-top: 10px; }
 
         #login-form, #user-dashboard { display: none; }
-
         @media (max-width: 900px) { .main-container { grid-template-columns: 1fr; } .auth-panel { position: static; } }
     </style>
 </head>
 <body>
 
-<header class="header">
-    <h1>大豪州 商品情報</h1>
-</header>
+<header class="header"><h1>大豪州 商品情報</h1></header>
 
 <div class="main-container">
     <main>
@@ -119,7 +85,7 @@
         <section>
             <h2 style="color: var(--mc-aqua);">🛒 商品検索</h2>
             <div class="controls">
-                <input type="search" id="search-box" placeholder="商品名で検索..." oninput="renderTable()" autocomplete="new-password" name="prevent_autofill">
+                <input type="search" id="search-box" placeholder="商品名や国名で検索..." oninput="renderTable()">
                 <select id="sort-select" onchange="renderTable()">
                     <option value="newest">新着順</option>
                     <option value="price-asc">価格の安い順</option>
@@ -128,14 +94,7 @@
             </div>
             <table>
                 <thead>
-                    <tr>
-                        <th>品目</th>
-                        <th>単価</th>
-                        <th>座標</th>
-                        <th>状況</th>
-                        <th>出品者</th>
-                        <th>操作</th>
-                    </tr>
+                    <tr><th>品目/国</th><th>単価</th><th>座標</th><th>状況</th><th>出品者</th><th>操作</th></tr>
                 </thead>
                 <tbody id="trade-tbody"></tbody>
             </table>
@@ -159,6 +118,7 @@
                 
                 <div class="input-group" style="margin-bottom: 20px;">
                     <h3 style="font-size: 0.8rem; color: #888; margin: 0;">新規出品・更新</h3>
+                    <input type="text" id="in-country" placeholder="国名 (例: 大豪州)">
                     <input type="text" id="in-name" placeholder="商品名">
                     <input type="text" id="in-price" placeholder="価格(KD)">
                     <input type="text" id="in-coords" placeholder="座標(X / Z)">
@@ -167,16 +127,14 @@
                         <option value="在庫僅少">在庫僅少</option>
                         <option value="受注生産">受注生産</option>
                     </select>
-                    <button class="btn-submit" onclick="submitTrade()">情報を登録・更新</button>
+                    <input type="text" id="hp_field" style="display:none !important;" tabindex="-1" autocomplete="off">
+                    <button class="btn-submit" id="submit-btn" onclick="submitTrade()">情報を登録・更新</button>
                 </div>
 
                 <div class="order-list">
                     <h3 style="font-size: 0.9rem; color: var(--mc-gold);">📩 届いた注文</h3>
-                    <div id="received-orders">
-                        <p style="font-size: 0.7rem; color: #666;">読み込み中...</p>
-                    </div>
+                    <div id="received-orders"><p style="font-size: 0.7rem; color: #666;">読み込み中...</p></div>
                 </div>
-
                 <button class="btn-logout" onclick="logout()">ログアウト</button>
             </div>
         </section>
@@ -184,88 +142,12 @@
 </div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbyveaxiI3Mzot6PFRj1TEWMMYhkZnsu-LOb58R0kCUFsiFikRppCBiZXLYobc9pNJrJ/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyeXr94OMrSyGWNjhZ-zjUC7AGmKrT57FCwJYz2rGCtcSNm715jeeEwMsGMYwahQ2ivKw/exec";
     const CITIZENS = ["nyokki1958", "daran0289", "maikuraumai", "kenti7599", "SoftMusic096337", "TempOwl79825726", "SlightSum8834", "yutakabicchi", "shotaro shizoka", "Tankichi1", "Sora3055", "ShabbyRuby54641", "yuisyunn", "kiri5620", "xRqmuzzzL YT", "WoodedTuba82716", "atatan3", "Ezipt3697", "y3ur1lala", "Harukaze4006", "RinRin404040", "takubon0114", "ZeroPlayer1396", "K1hoOIE", "Hikaru bp", "kemi114", "PaltryCow795892", "haruson7856", "BleakDread23911", "FleeingRat43895", "Nnz0313", "shuji12324", "haruhi8395", "utte75877", "InlandVeil18339", "BlahColt4486", "kitune0510", "MIYUKI20107577", "HardPigeon4047", "PairedLand4913", "hiyorispyair", "DueMite4591", "yukiharu518817", "kouk9690", "Ram1117enter", "GCsTanzanite", "haha70473", "Raika6605", "hagetarouSP", "tesuteru", "tantanmendesu29", "Commander129632", "RINEshinki3030", "kanade0905", "mike32Ch", "xTZxJP"];
 
     let currentData = { products: [], orders: [] }; 
     let currentUser = JSON.parse(localStorage.getItem('daigoshu_user')) || null;
     let lastSubmitTime = 0; 
-
-
-    async function placeOrder(seller, productName) {
-        const buyer = prompt("あなたのMCIDを入力してください（注文者名として記録されます）");
-        if (!buyer) return;
-        const payload = {
-            action: "placeOrder",
-            buyer: buyer,
-            seller: seller,
-            productName: productName,
-            timestamp: new Date().toLocaleString("ja-JP")
-        };
-        try {
-            const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify(payload) });
-            const result = await res.json();
-            if (result.status === "success") {
-                alert(productName + " の注文を送信しました！");
-                loadTradeData();
-            } else { alert("注文失敗: " + result.message); }
-        } catch (e) { alert("接続エラー"); }
-    }
-
-    async function submitTrade() {
-        if (!currentUser) return;
-
-        const now = Date.now();
-        if (now - lastSubmitTime < 30000) {
-            alert("連投防止：あと " + Math.round((30000 - (now - lastSubmitTime))/1000) + " 秒待ってください。");
-            return;
-        }
-
-        if (document.getElementById('hp_field').value !== "") return;
-
-        let userIp = "unknown";
-        try {
-            const ipRes = await fetch('https://api.ipify.org?format=json');
-            const ipData = await ipRes.json();
-            userIp = ipData.ip;
-        } catch(e) { console.error("IP取得失敗"); }
-
-        const payload = {
-            action: "updateProduct",
-            seller: currentUser.mcid,
-            password: currentUser.pass,
-            country: document.getElementById('in-country').value,
-            name: document.getElementById('in-name').value,
-            price: document.getElementById('in-price').value,
-            coords: document.getElementById('in-coords').value,
-            stock: document.getElementById('in-stock').value,
-            hp_field: document.getElementById('hp_field').value,
-            ip: userIp // これは荒らし防止のためです。
-        };
-
-        if (!payload.country || !payload.name) return alert("国名と商品名は必須です。");
-
-        try {
-            const btn = document.getElementById('submit-btn') || document.querySelector('.btn-submit');
-            btn.disabled = true;
-            btn.innerText = "送信中...";
-
-            const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify(payload) });
-            const result = await res.json();
-            
-            if (result.status === "success") {
-                lastSubmitTime = Date.now();
-                alert("更新完了！");
-                loadTradeData();
-            } else {
-                alert("エラー: " + result.message);
-            }
-        } catch (e) { alert("失敗"); } finally {
-            const btn = document.getElementById('submit-btn') || document.querySelector('.btn-submit');
-            btn.disabled = false;
-            btn.innerText = "登録・更新";
-        }
-    }
 
     async function loadTradeData() {
         try {
@@ -276,7 +158,7 @@
             renderTable();
             updateStats(currentData.products);
             renderOrders();
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error("データロード失敗"); }
     }
 
     function renderTable() {
@@ -305,25 +187,69 @@
         `).join('');
     }
 
-    function renderOrders() {
-        const container = document.getElementById('received-orders');
-        if (!currentUser || !container) return;
-        const myOrders = (currentData.orders || []).filter(order => order.seller === currentUser.mcid);
-        container.innerHTML = myOrders.length === 0 ? '<p style="font-size: 0.7rem; color: #666;">現在、注文はありません。</p>' : 
-        myOrders.map(order => `
-            <div class="order-item">
-                <div style="font-size:0.7rem; color:#888;">${order.timestamp}</div>
-                <div><b>${order.buyer}</b> → ${order.productName}</div>
-                <button onclick="deleteOrder('${order.id}')" style="color:#ff4444; background:none; border:none; cursor:pointer; font-size:0.7rem;">[完了・削除]</button>
-            </div>
-        `).join('');
+    async function submitTrade() {
+        if (!currentUser) return;
+        const now = Date.now();
+        if (now - lastSubmitTime < 30000) { alert("30秒待ってください"); return; }
+        if (document.getElementById('hp_field').value !== "") return;
+
+        let userIp = "unknown";
+        try {
+            const ipRes = await fetch('https://api.ipify.org?format=json');
+            const ipData = await ipRes.json();
+            userIp = ipData.ip;
+        } catch(e) {}
+
+        const payload = {
+            action: "updateProduct",
+            seller: currentUser.mcid,
+            password: currentUser.pass,
+            country: document.getElementById('in-country').value,
+            name: document.getElementById('in-name').value,
+            price: document.getElementById('in-price').value,
+            coords: document.getElementById('in-coords').value,
+            stock: document.getElementById('in-stock').value,
+            hp_field: document.getElementById('hp_field').value,
+            ip: userIp
+        };
+
+        if (!payload.country || !payload.name) return alert("国名と商品名は必須です。");
+
+        const btn = document.getElementById('submit-btn');
+        try {
+            btn.disabled = true; btn.innerText = "送信中...";
+            const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify(payload) });
+            const result = await res.json();
+            if (result.status === "success") {
+                lastSubmitTime = Date.now();
+                alert("更新完了！");
+                loadTradeData();
+            } else { alert("エラー: " + result.message); }
+        } catch (e) { alert("失敗"); } finally {
+            btn.disabled = false; btn.innerText = "登録・更新";
+        }
+    }
+
+    async function placeOrder(seller, productName) {
+        const buyer = prompt("あなたのMCIDを入力してください");
+        if (!buyer) return;
+        try {
+            const res = await fetch(GAS_URL, { 
+                method: "POST", 
+                body: JSON.stringify({ action: "placeOrder", buyer, seller, productName, timestamp: new Date().toLocaleString("ja-JP") }) 
+            });
+            alert("注文を送信しました！");
+            loadTradeData();
+        } catch (e) { alert("注文失敗"); }
     }
 
     async function deleteOrder(orderId) {
         if (!confirm("取引完了として削除しますか？")) return;
-        const payload = { action: "deleteOrder", orderId: orderId, seller: currentUser.mcid, password: currentUser.pass };
         try {
-            const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify(payload) });
+            await fetch(GAS_URL, { 
+                method: "POST", 
+                body: JSON.stringify({ action: "deleteOrder", orderId, seller: currentUser.mcid, password: currentUser.pass }) 
+            });
             loadTradeData();
         } catch (e) { alert("削除失敗"); }
     }
@@ -338,6 +264,20 @@
             const prc = data.length > 0 ? Math.round((val.n / data.length) * 100) : 0;
             return `<div class="stats-item"><span>${key} (${val.n}件)</span><div class="bar-bg"><div class="bar-fill" style="width:${prc}%; background:${val.c};"></div></div></div>`;
         }).join('');
+    }
+
+    function renderOrders() {
+        const container = document.getElementById('received-orders');
+        if (!currentUser || !container) return;
+        const myOrders = currentData.orders.filter(order => order.seller === currentUser.mcid);
+        container.innerHTML = myOrders.length === 0 ? '<p style="font-size: 0.7rem; color: #666;">現在、注文はありません。</p>' : 
+        myOrders.map(order => `
+            <div class="order-item">
+                <div style="font-size:0.7rem; color:#888;">${order.timestamp}</div>
+                <div><b>${order.buyer}</b> → ${order.productName}</div>
+                <button onclick="deleteOrder('${order.id}')" style="color:#ff4444; background:none; border:none; cursor:pointer; font-size:0.7rem;">[完了・削除]</button>
+            </div>
+        `).join('');
     }
 
     function checkAuth() {
@@ -363,8 +303,7 @@
 
     function logout() { localStorage.removeItem('daigoshu_user'); currentUser = null; checkAuth(); }
 
-    checkAuth();
-    loadTradeData();
-    setInterval(loadTradeData, 30000); 
+    checkAuth(); loadTradeData(); setInterval(loadTradeData, 30000);
 </script>
-
+</body>
+</html>

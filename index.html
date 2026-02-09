@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>大豪州共和国 商品情報</title>
+    <meta name="description" content="大豪州共和国の商品情報ポータルサイトです。国民の出品情報をリアルタイムで公開中。">
+    <meta name="keywords" content="大豪州共和国, マイクラ, 貿易, 商品情報">
     <style>
         :root {
             --mc-green: #3cfb00;
@@ -85,7 +87,7 @@
         <section>
             <h2 style="color: var(--mc-aqua);">🛒 商品検索</h2>
             <div class="controls">
-                <input type="search" id="search-box" placeholder="商品名や国名で検索..." oninput="renderTable()">
+                <input type="search" id="search-box" placeholder="商品名や出品者で検索..." oninput="renderTable()">
                 <select id="sort-select" onchange="renderTable()">
                     <option value="newest">新着順</option>
                     <option value="price-asc">価格の安い順</option>
@@ -94,7 +96,7 @@
             </div>
             <table>
                 <thead>
-                    <tr><th>品目/国</th><th>単価</th><th>座標</th><th>状況</th><th>出品者</th><th>操作</th></tr>
+                    <tr><th>品目</th><th>単価</th><th>座標</th><th>状況</th><th>出品者</th><th>操作</th></tr>
                 </thead>
                 <tbody id="trade-tbody"></tbody>
             </table>
@@ -118,7 +120,6 @@
                 
                 <div class="input-group" style="margin-bottom: 20px;">
                     <h3 style="font-size: 0.8rem; color: #888; margin: 0;">新規出品・更新</h3>
-                    <input type="text" id="in-country" placeholder="国名 (例: 大豪州)">
                     <input type="text" id="in-name" placeholder="商品名">
                     <input type="text" id="in-price" placeholder="価格(KD)">
                     <input type="text" id="in-coords" placeholder="座標(X / Z)">
@@ -163,25 +164,27 @@
 
     function renderTable() {
         const tbody = document.getElementById('trade-tbody');
+        if (!tbody) return;
+
         const search = document.getElementById('search-box').value.toLowerCase();
         const sort = document.getElementById('sort-select').value;
         
-        let filtered = currentData.products.filter(d => 
-            d.name.toLowerCase().includes(search) || 
-            d.seller.toLowerCase().includes(search) ||
-            (d.country && d.country.toLowerCase().includes(search))
-        );
+        let filtered = currentData.products.filter(d => {
+            const name = d.name ? d.name.toLowerCase() : "";
+            const seller = d.seller ? d.seller.toLowerCase() : "";
+            return name.includes(search) || seller.includes(search);
+        });
         
         if (sort === "price-asc") filtered.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
         else if (sort === "price-desc") filtered.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
 
         tbody.innerHTML = filtered.map(item => `
             <tr>
-                <td><span style="background:#333; color:var(--mc-aqua); padding:2px 5px; border-radius:3px; font-size:0.7rem;">${item.country || '---'}</span><br><strong>${item.name}</strong></td>
-                <td class="price">${item.price} KD</td>
-                <td class="coordinate">${item.coords}</td>
-                <td style="font-size:0.8rem;">${item.stock}</td>
-                <td class="seller-tag">${item.seller}</td>
+                <td><strong>${item.name || '不明な商品'}</strong></td>
+                <td class="price">${item.price || '0'} KD</td>
+                <td class="coordinate">${item.coords || '---'}</td>
+                <td style="font-size:0.8rem;">${item.stock || '---'}</td>
+                <td class="seller-tag">${item.seller || 'anonymous'}</td>
                 <td><button class="btn-order" onclick="placeOrder('${item.seller}', '${item.name}')">注文</button></td>
             </tr>
         `).join('');
@@ -204,7 +207,7 @@
             action: "updateProduct",
             seller: currentUser.mcid,
             password: currentUser.pass,
-            country: document.getElementById('in-country').value,
+            country: "", 
             name: document.getElementById('in-name').value,
             price: document.getElementById('in-price').value,
             coords: document.getElementById('in-coords').value,
@@ -213,7 +216,7 @@
             ip: userIp
         };
 
-        if (!payload.country || !payload.name) return alert("国名と商品名は必須です。");
+        if (!payload.name) return alert("商品名は必須です。");
 
         const btn = document.getElementById('submit-btn');
         try {
@@ -225,8 +228,8 @@
                 alert("更新完了！");
                 loadTradeData();
             } else { alert("エラー: " + result.message); }
-        } catch (e) { alert("失敗"); } finally {
-            btn.disabled = false; btn.innerText = "登録・更新";
+        } catch (e) { alert("送信に失敗しました。"); } finally {
+            btn.disabled = false; btn.innerText = "情報を登録・更新";
         }
     }
 
@@ -246,11 +249,14 @@
     async function deleteOrder(orderId) {
         if (!confirm("取引完了として削除しますか？")) return;
         try {
-            await fetch(GAS_URL, { 
+            const res = await fetch(GAS_URL, { 
                 method: "POST", 
                 body: JSON.stringify({ action: "deleteOrder", orderId, seller: currentUser.mcid, password: currentUser.pass }) 
             });
-            loadTradeData();
+            const result = await res.json();
+            if(result.status === "success") {
+                loadTradeData();
+            } else { alert("削除エラー: " + result.message); }
         } catch (e) { alert("削除失敗"); }
     }
 
@@ -303,8 +309,9 @@
 
     function logout() { localStorage.removeItem('daigoshu_user'); currentUser = null; checkAuth(); }
 
-    checkAuth(); loadTradeData(); setInterval(loadTradeData, 30000);
+    checkAuth(); 
+    loadTradeData(); 
+    setInterval(loadTradeData, 30000);
 </script>
 </body>
 </html>
-

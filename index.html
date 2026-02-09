@@ -155,18 +155,20 @@
         try {
             const res = await fetch(GAS_URL);
             const data = await res.json();
+            
             currentData.products = (data.products || []).map(p => ({
-                name: p.name || "---",
-                price: p.price || "0",
+                name: p.name || "---",    
+                price: p.price || "0",  
                 coords: p.coords || "---",
-                stock: p.stock || "不明",
+                stock: p.stock || "不明",  
                 seller: p.seller || "anonymous"
             }));
+            
             currentData.orders = data.orders || [];
             renderTable();
             updateStats(currentData.products);
             renderOrders();
-        } catch (e) { console.error("データ読み込み失敗"); }
+        } catch (e) { console.error("データ読み込み失敗", e); }
     }
 
     function renderTable() {
@@ -304,4 +306,5 @@
 </script>
 </body>
 </html>
+
 

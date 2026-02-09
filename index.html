@@ -189,6 +189,7 @@
 
     let currentData = { products: [], orders: [] }; 
     let currentUser = JSON.parse(localStorage.getItem('daigoshu_user')) || null;
+    let lastSubmitTime = 0; 
 
 
     async function placeOrder(seller, productName) {
@@ -211,85 +212,59 @@
         } catch (e) { alert("接続エラー"); }
     }
 
-    function renderOrders() {
-        const container = document.getElementById('received-orders');
-        if (!currentUser || !container) return;
-        const myOrders = (currentData.orders || []).filter(order => order.seller === currentUser.mcid);
-        if (myOrders.length === 0) {
-            container.innerHTML = '<p style="font-size: 0.7rem; color: #666;">現在、注文はありません。</p>';
-            return;
-        }
-        container.innerHTML = myOrders.map(order => `
-            <div class="order-item">
-                <div style="font-size:0.7rem; color:#888;">${order.timestamp}</div>
-                <div><b>${order.buyer}</b> → ${order.productName}</div>
-                <button onclick="deleteOrder('${order.id}')" style="color:#ff4444; background:none; border:none; cursor:pointer; font-size:0.7rem; padding:0;">[完了・削除]</button>
-            </div>
-        `).join('');
-    }
-
     async function submitTrade() {
         if (!currentUser) return;
+
+        const now = Date.now();
+        if (now - lastSubmitTime < 30000) {
+            alert("連投防止：あと " + Math.round((30000 - (now - lastSubmitTime))/1000) + " 秒待ってください。");
+            return;
+        }
+
+        if (document.getElementById('hp_field').value !== "") return;
+
+        let userIp = "unknown";
+        try {
+            const ipRes = await fetch('https://api.ipify.org?format=json');
+            const ipData = await ipRes.json();
+            userIp = ipData.ip;
+        } catch(e) { console.error("IP取得失敗"); }
+
         const payload = {
             action: "updateProduct",
             seller: currentUser.mcid,
             password: currentUser.pass,
+            country: document.getElementById('in-country').value,
             name: document.getElementById('in-name').value,
             price: document.getElementById('in-price').value,
             coords: document.getElementById('in-coords').value,
-            stock: document.getElementById('in-stock').value
+            stock: document.getElementById('in-stock').value,
+            hp_field: document.getElementById('hp_field').value,
+            ip: userIp // これは荒らし防止のためです。
         };
-        if (!payload.name) { alert("商品名は必須です"); return; }
+
+        if (!payload.country || !payload.name) return alert("国名と商品名は必須です。");
+
         try {
+            const btn = document.getElementById('submit-btn') || document.querySelector('.btn-submit');
+            btn.disabled = true;
+            btn.innerText = "送信中...";
+
             const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify(payload) });
             const result = await res.json();
-            if (result.status === "success") { alert("更新完了！"); loadTradeData(); }
-            else { alert(result.message); }
-        } catch (e) { alert("失敗"); }
-    }
-
-    async function deleteOrder(orderId) {
-        if (!confirm("取引完了として削除しますか？")) return;
-        const payload = {
-            action: "deleteOrder",
-            orderId: orderId,
-            seller: currentUser.mcid,
-            password: currentUser.pass
-        };
-        try {
-            const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify(payload) });
-            const result = await res.json();
-            if (result.status === "success") { loadTradeData(); }
-        } catch (e) { alert("削除失敗"); }
-    }
-
-    function checkAuth() {
-        const loginForm = document.getElementById('login-form');
-        const dashboard = document.getElementById('user-dashboard');
-        if (currentUser) {
-            loginForm.style.display = 'none';
-            dashboard.style.display = 'block';
-            document.getElementById('welcome-msg').innerText = `国民ID: ${currentUser.mcid}`;
-            renderOrders();
-        } else {
-            loginForm.style.display = 'block';
-            dashboard.style.display = 'none';
+            
+            if (result.status === "success") {
+                lastSubmitTime = Date.now();
+                alert("更新完了！");
+                loadTradeData();
+            } else {
+                alert("エラー: " + result.message);
+            }
+        } catch (e) { alert("失敗"); } finally {
+            const btn = document.getElementById('submit-btn') || document.querySelector('.btn-submit');
+            btn.disabled = false;
+            btn.innerText = "登録・更新";
         }
-    }
-
-    function login() {
-        const mcid = document.getElementById('auth-mcid').value;
-        const pass = document.getElementById('id-auth-pass').value;
-        if (!CITIZENS.includes(mcid)) { alert("国民リストにありません"); return; }
-        currentUser = { mcid, pass };
-        localStorage.setItem('daigoshu_user', JSON.stringify(currentUser));
-        checkAuth();
-    }
-
-    function logout() {
-        localStorage.removeItem('daigoshu_user');
-        currentUser = null;
-        checkAuth();
     }
 
     async function loadTradeData() {
@@ -304,57 +279,23 @@
         } catch (e) { console.error(e); }
     }
 
-　　async function submitTrade() {
-        const now = Date.now();
-        if (now - lastSubmitTime < 30000) {
-            alert("連投防止：あと " + Math.round((60000 - (now - lastSubmitTime))/1000) + " 秒待ってください。");
-            return;
-        }
-
-    
-        if (document.getElementById('hp_field').value !== "") return;
-
-        const payload = {
-            action: "updateProduct",
-            seller: currentUser.mcid,
-            password: currentUser.pass,
-            country: document.getElementById('in-country').value,
-            name: document.getElementById('in-name').value,
-            price: document.getElementById('in-price').value,
-            coords: document.getElementById('in-coords').value,
-            stock: document.getElementById('in-stock').value,
-            hp_field: document.getElementById('hp_field').value // GAS側でもチェック
-        };
-
-        if (!payload.country || !payload.name) return alert("国名と商品名は必須です。");
-
-        try {
-            const btn = document.getElementById('submit-btn');
-            btn.disabled = true;
-            btn.innerText = "送信中...";
-
-            const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify(payload) });
-            lastSubmitTime = Date.now(); // 送信時刻を記録
-            alert("更新完了！");
-            loadTradeData();
-        } catch (e) { alert("失敗"); } finally {
-            document.getElementById('submit-btn').disabled = false;
-            document.getElementById('submit-btn').innerText = "登録・更新";
-        }
-    }
-    
     function renderTable() {
         const tbody = document.getElementById('trade-tbody');
         const search = document.getElementById('search-box').value.toLowerCase();
         const sort = document.getElementById('sort-select').value;
-        let filtered = currentData.products.filter(d => d.name.toLowerCase().includes(search) || d.seller.toLowerCase().includes(search));
+        
+        let filtered = currentData.products.filter(d => 
+            d.name.toLowerCase().includes(search) || 
+            d.seller.toLowerCase().includes(search) ||
+            (d.country && d.country.toLowerCase().includes(search))
+        );
         
         if (sort === "price-asc") filtered.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
         else if (sort === "price-desc") filtered.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
 
         tbody.innerHTML = filtered.map(item => `
             <tr>
-                <td><strong>${item.name}</strong></td>
+                <td><span style="background:#333; color:var(--mc-aqua); padding:2px 5px; border-radius:3px; font-size:0.7rem;">${item.country || '---'}</span><br><strong>${item.name}</strong></td>
                 <td class="price">${item.price} KD</td>
                 <td class="coordinate">${item.coords}</td>
                 <td style="font-size:0.8rem;">${item.stock}</td>
@@ -362,6 +303,29 @@
                 <td><button class="btn-order" onclick="placeOrder('${item.seller}', '${item.name}')">注文</button></td>
             </tr>
         `).join('');
+    }
+
+    function renderOrders() {
+        const container = document.getElementById('received-orders');
+        if (!currentUser || !container) return;
+        const myOrders = (currentData.orders || []).filter(order => order.seller === currentUser.mcid);
+        container.innerHTML = myOrders.length === 0 ? '<p style="font-size: 0.7rem; color: #666;">現在、注文はありません。</p>' : 
+        myOrders.map(order => `
+            <div class="order-item">
+                <div style="font-size:0.7rem; color:#888;">${order.timestamp}</div>
+                <div><b>${order.buyer}</b> → ${order.productName}</div>
+                <button onclick="deleteOrder('${order.id}')" style="color:#ff4444; background:none; border:none; cursor:pointer; font-size:0.7rem;">[完了・削除]</button>
+            </div>
+        `).join('');
+    }
+
+    async function deleteOrder(orderId) {
+        if (!confirm("取引完了として削除しますか？")) return;
+        const payload = { action: "deleteOrder", orderId: orderId, seller: currentUser.mcid, password: currentUser.pass };
+        try {
+            const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify(payload) });
+            loadTradeData();
+        } catch (e) { alert("削除失敗"); }
     }
 
     function updateStats(data) {
@@ -376,13 +340,30 @@
         }).join('');
     }
 
+    function checkAuth() {
+        const loginForm = document.getElementById('login-form');
+        const dashboard = document.getElementById('user-dashboard');
+        if (currentUser) {
+            loginForm.style.display = 'none'; dashboard.style.display = 'block';
+            document.getElementById('welcome-msg').innerText = `国民ID: ${currentUser.mcid}`;
+            renderOrders();
+        } else {
+            loginForm.style.display = 'block'; dashboard.style.display = 'none';
+        }
+    }
+
+    function login() {
+        const mcid = document.getElementById('auth-mcid').value;
+        const pass = document.getElementById('id-auth-pass').value;
+        if (!CITIZENS.includes(mcid)) { alert("国民リストにありません"); return; }
+        currentUser = { mcid, pass };
+        localStorage.setItem('daigoshu_user', JSON.stringify(currentUser));
+        checkAuth();
+    }
+
+    function logout() { localStorage.removeItem('daigoshu_user'); currentUser = null; checkAuth(); }
+
     checkAuth();
     loadTradeData();
     setInterval(loadTradeData, 30000); 
 </script>
-</body>
-</html>
-
-
-
-

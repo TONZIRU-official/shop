@@ -154,7 +154,14 @@
         try {
             const res = await fetch(GAS_URL);
             const data = await res.json();
-            currentData.products = data.products || [];
+            // スプレッドシートの列順を直接商品データとしてマッピング
+            currentData.products = (data.products || []).map(p => ({
+                name: p.name,
+                price: p.price,
+                coords: p.coords,
+                stock: p.stock,
+                seller: p.seller
+            }));
             currentData.orders = data.orders || [];
             renderTable();
             updateStats(currentData.products);
@@ -170,8 +177,8 @@
         const sort = document.getElementById('sort-select').value;
         
         let filtered = currentData.products.filter(d => {
-            const name = d.name ? d.name.toLowerCase() : "";
-            const seller = d.seller ? d.seller.toLowerCase() : "";
+            const name = (d.name || "").toLowerCase();
+            const seller = (d.seller || "").toLowerCase();
             return name.includes(search) || seller.includes(search);
         });
         
@@ -180,7 +187,7 @@
 
         tbody.innerHTML = filtered.map(item => `
             <tr>
-                <td><strong>${item.name || '不明な商品'}</strong></td>
+                <td><strong>${item.name || '---'}</strong></td>
                 <td class="price">${item.price || '0'} KD</td>
                 <td class="coordinate">${item.coords || '---'}</td>
                 <td style="font-size:0.8rem;">${item.stock || '---'}</td>
@@ -207,7 +214,6 @@
             action: "updateProduct",
             seller: currentUser.mcid,
             password: currentUser.pass,
-            country: "", 
             name: document.getElementById('in-name').value,
             price: document.getElementById('in-price').value,
             coords: document.getElementById('in-coords').value,
@@ -315,4 +321,5 @@
 </script>
 </body>
 </html>
+
 

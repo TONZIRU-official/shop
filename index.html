@@ -2,10 +2,10 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <meta name="google-site-verification" content="SxzZn87uR4TBl9SPhOZBWG9xDWxWMQ-BYZpEGILwAwY" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>大豪州共和国 商品情報</title>
     <meta name="description" content="大豪州共和国の商品情報ポータルサイトです。国民の出品情報をリアルタイムで公開中。">
-    <meta name="keywords" content="大豪州共和国, マイクラ, 貿易, 商品情報">
     <style>
         :root {
             --mc-green: #3cfb00;
@@ -36,6 +36,7 @@
             border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 25px;
         }
 
+        h2 { font-size: 1.1rem; margin-top: 0; display: flex; align-items: center; gap: 10px; }
         .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .stats-item { margin-bottom: 15px; }
         .bar-bg { background: #000; border-radius: 10px; height: 12px; overflow: hidden; border: 1px solid #444; margin-top: 5px; }
@@ -148,50 +149,45 @@
 
     let currentData = { products: [], orders: [] }; 
     let currentUser = JSON.parse(localStorage.getItem('daigoshu_user')) || null;
-    let lastSubmitTime = 0; 
+    let lastSubmitTime = 0;
 
     async function loadTradeData() {
         try {
             const res = await fetch(GAS_URL);
             const data = await res.json();
-            // スプレッドシートの列順を直接商品データとしてマッピング
             currentData.products = (data.products || []).map(p => ({
-                name: p.name,
-                price: p.price,
-                coords: p.coords,
-                stock: p.stock,
-                seller: p.seller
+                name: p.name || "---",
+                price: p.price || "0",
+                coords: p.coords || "---",
+                stock: p.stock || "不明",
+                seller: p.seller || "anonymous"
             }));
             currentData.orders = data.orders || [];
             renderTable();
             updateStats(currentData.products);
             renderOrders();
-        } catch (e) { console.error("データロード失敗"); }
+        } catch (e) { console.error("データ読み込み失敗"); }
     }
 
     function renderTable() {
         const tbody = document.getElementById('trade-tbody');
-        if (!tbody) return;
-
         const search = document.getElementById('search-box').value.toLowerCase();
         const sort = document.getElementById('sort-select').value;
         
-        let filtered = currentData.products.filter(d => {
-            const name = (d.name || "").toLowerCase();
-            const seller = (d.seller || "").toLowerCase();
-            return name.includes(search) || seller.includes(search);
-        });
+        let filtered = currentData.products.filter(d => 
+            d.name.toLowerCase().includes(search) || d.seller.toLowerCase().includes(search)
+        );
         
         if (sort === "price-asc") filtered.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
         else if (sort === "price-desc") filtered.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
 
         tbody.innerHTML = filtered.map(item => `
             <tr>
-                <td><strong>${item.name || '---'}</strong></td>
-                <td class="price">${item.price || '0'} KD</td>
-                <td class="coordinate">${item.coords || '---'}</td>
-                <td style="font-size:0.8rem;">${item.stock || '---'}</td>
-                <td class="seller-tag">${item.seller || 'anonymous'}</td>
+                <td><strong>${item.name}</strong></td>
+                <td class="price">${item.price} KD</td>
+                <td class="coordinate">${item.coords}</td>
+                <td style="font-size:0.8rem;">${item.stock}</td>
+                <td class="seller-tag">${item.seller}</td>
                 <td><button class="btn-order" onclick="placeOrder('${item.seller}', '${item.name}')">注文</button></td>
             </tr>
         `).join('');
@@ -200,15 +196,8 @@
     async function submitTrade() {
         if (!currentUser) return;
         const now = Date.now();
-        if (now - lastSubmitTime < 30000) { alert("30秒待ってください"); return; }
+        if (now - lastSubmitTime < 20000) { alert("連投防止のため20秒待ってください"); return; }
         if (document.getElementById('hp_field').value !== "") return;
-
-        let userIp = "unknown";
-        try {
-            const ipRes = await fetch('https://api.ipify.org?format=json');
-            const ipData = await ipRes.json();
-            userIp = ipData.ip;
-        } catch(e) {}
 
         const payload = {
             action: "updateProduct",
@@ -217,9 +206,7 @@
             name: document.getElementById('in-name').value,
             price: document.getElementById('in-price').value,
             coords: document.getElementById('in-coords').value,
-            stock: document.getElementById('in-stock').value,
-            hp_field: document.getElementById('hp_field').value,
-            ip: userIp
+            stock: document.getElementById('in-stock').value
         };
 
         if (!payload.name) return alert("商品名は必須です。");
@@ -234,7 +221,7 @@
                 alert("更新完了！");
                 loadTradeData();
             } else { alert("エラー: " + result.message); }
-        } catch (e) { alert("送信に失敗しました。"); } finally {
+        } catch (e) { alert("送信失敗"); } finally {
             btn.disabled = false; btn.innerText = "情報を登録・更新";
         }
     }
@@ -243,7 +230,7 @@
         const buyer = prompt("あなたのMCIDを入力してください");
         if (!buyer) return;
         try {
-            const res = await fetch(GAS_URL, { 
+            await fetch(GAS_URL, { 
                 method: "POST", 
                 body: JSON.stringify({ action: "placeOrder", buyer, seller, productName, timestamp: new Date().toLocaleString("ja-JP") }) 
             });
@@ -260,9 +247,7 @@
                 body: JSON.stringify({ action: "deleteOrder", orderId, seller: currentUser.mcid, password: currentUser.pass }) 
             });
             const result = await res.json();
-            if(result.status === "success") {
-                loadTradeData();
-            } else { alert("削除エラー: " + result.message); }
+            if(result.status === "success") loadTradeData();
         } catch (e) { alert("削除失敗"); }
     }
 
@@ -315,11 +300,7 @@
 
     function logout() { localStorage.removeItem('daigoshu_user'); currentUser = null; checkAuth(); }
 
-    checkAuth(); 
-    loadTradeData(); 
-    setInterval(loadTradeData, 30000);
+    checkAuth(); loadTradeData(); setInterval(loadTradeData, 30000);
 </script>
 </body>
 </html>
-
-

@@ -184,7 +184,7 @@
 </div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwyhKoikgUatCyJjzZia9IOh1_3lF-6Du-ZxdphRkvX7v6bgbE4Z0hLl2CQuRhojh_E/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwuJazMBMHZON1D8dQB3IqEloB7GupZj1z-aZcXtIxYP2IMtkI2cThA_g3TW0hmF3Pq/exec";
     const CITIZENS = ["nyokki1958", "daran0289", "maikuraumai", "kenti7599", "SoftMusic096337", "TempOwl79825726", "SlightSum8834", "yutakabicchi", "shotaro shizoka", "Tankichi1", "Sora3055", "ShabbyRuby54641", "yuisyunn", "kiri5620", "xRqmuzzzL YT", "WoodedTuba82716", "atatan3", "Ezipt3697", "y3ur1lala", "Harukaze4006", "RinRin404040", "takubon0114", "ZeroPlayer1396", "K1hoOIE", "Hikaru bp", "kemi114", "PaltryCow795892", "haruson7856", "BleakDread23911", "FleeingRat43895", "Nnz0313", "shuji12324", "haruhi8395", "utte75877", "InlandVeil18339", "BlahColt4486", "kitune0510", "MIYUKI20107577", "HardPigeon4047", "PairedLand4913", "hiyorispyair", "DueMite4591", "yukiharu518817", "kouk9690", "Ram1117enter", "GCsTanzanite", "haha70473", "Raika6605", "hagetarouSP", "tesuteru", "tantanmendesu29", "Commander129632", "RINEshinki3030", "kanade0905", "mike32Ch", "xTZxJP"];
 
     let currentData = { products: [], orders: [] }; 
@@ -304,6 +304,45 @@
         } catch (e) { console.error(e); }
     }
 
+　　async function submitTrade() {
+        const now = Date.now();
+        if (now - lastSubmitTime < 30000) {
+            alert("連投防止：あと " + Math.round((60000 - (now - lastSubmitTime))/1000) + " 秒待ってください。");
+            return;
+        }
+
+    
+        if (document.getElementById('hp_field').value !== "") return;
+
+        const payload = {
+            action: "updateProduct",
+            seller: currentUser.mcid,
+            password: currentUser.pass,
+            country: document.getElementById('in-country').value,
+            name: document.getElementById('in-name').value,
+            price: document.getElementById('in-price').value,
+            coords: document.getElementById('in-coords').value,
+            stock: document.getElementById('in-stock').value,
+            hp_field: document.getElementById('hp_field').value // GAS側でもチェック
+        };
+
+        if (!payload.country || !payload.name) return alert("国名と商品名は必須です。");
+
+        try {
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            btn.innerText = "送信中...";
+
+            const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify(payload) });
+            lastSubmitTime = Date.now(); // 送信時刻を記録
+            alert("更新完了！");
+            loadTradeData();
+        } catch (e) { alert("失敗"); } finally {
+            document.getElementById('submit-btn').disabled = false;
+            document.getElementById('submit-btn').innerText = "登録・更新";
+        }
+    }
+    
     function renderTable() {
         const tbody = document.getElementById('trade-tbody');
         const search = document.getElementById('search-box').value.toLowerCase();
@@ -343,5 +382,6 @@
 </script>
 </body>
 </html>
+
 
 

@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>大豪州共和国 商品情報</title>
     <meta name="description" content="大豪州共和国の商品情報ポータルサイトです。国民の出品情報をリアルタイムで公開中。">
-    <meta name="keywords" content="大豪州共和国, マイクラ, 貿易, 商品情報, 大豪州共和国商品情報ポータル">
     <style>
         :root {
             --mc-green: #3cfb00;
@@ -84,16 +83,19 @@
         .auth-panel { border: 1px solid var(--mc-gold); position: sticky; top: 20px; }
         .input-group { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
         input, select { background: #000; border: 1px solid #444; color: #fff; padding: 12px; border-radius: 4px; font-family: inherit; }
-        input:focus { border-color: var(--mc-gold); outline: none; }
         
         .btn-submit {
             background: var(--mc-gold); color: #000; border: none; padding: 15px;
             font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s; text-transform: uppercase;
         }
         
+        /* 注文一覧のスタイル */
+        .order-list { margin-top: 20px; border-top: 1px solid #444; padding-top: 15px; }
+        .order-item { background: #1a1a1a; padding: 10px; margin-bottom: 8px; border-left: 3px solid var(--mc-gold); font-size: 0.8rem; }
+
         .btn-logout {
             background: #ff4444; color: #fff; border: none; padding: 8px;
-            font-size: 0.7rem; cursor: pointer; border-radius: 4px; margin-top: 10px;
+            font-size: 0.7rem; cursor: pointer; border-radius: 4px; margin-top: 10px; width: 100%;
         }
 
         #login-form, #user-dashboard { display: none; }
@@ -152,9 +154,11 @@
             </div>
 
             <div id="user-dashboard">
-                <h2 style="color: var(--mc-gold);">⚒️ 商品を出品する</h2>
-                <p id="welcome-msg" style="font-size: 0.8rem; color: var(--mc-aqua);"></p>
-                <div class="input-group">
+                <h2 style="color: var(--mc-gold);">⚒️ 管理パネル</h2>
+                <p id="welcome-msg" style="font-size: 0.8rem; color: var(--mc-aqua); margin-bottom: 10px;"></p>
+                
+                <div class="input-group" style="margin-bottom: 20px;">
+                    <h3 style="font-size: 0.8rem; color: #888; margin: 0;">新規出品・更新</h3>
                     <input type="text" id="in-name" placeholder="商品名">
                     <input type="text" id="in-price" placeholder="価格(KD)">
                     <input type="text" id="in-coords" placeholder="座標(X / Z)">
@@ -164,19 +168,28 @@
                         <option value="受注生産">受注生産</option>
                     </select>
                     <button class="btn-submit" onclick="submitTrade()">情報を登録・更新</button>
-                    <button class="btn-logout" onclick="logout()">ログアウト</button>
                 </div>
+
+                <div class="order-list">
+                    <h3 style="font-size: 0.9rem; color: var(--mc-gold);">📩 届いた注文</h3>
+                    <div id="received-orders">
+                        <p style="font-size: 0.7rem; color: #666;">読み込み中...</p>
+                    </div>
+                </div>
+
+                <button class="btn-logout" onclick="logout()">ログアウト</button>
             </div>
         </section>
     </aside>
 </div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzngZ12yBdeHcrjQ4M976_cRCX0IeKyVFIFw7byvG0ZlAtaiKQpzP0F7mhGO2MBbl2p/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwyhKoikgUatCyJjzZia9IOh1_3lF-6Du-ZxdphRkvX7v6bgbE4Z0hLl2CQuRhojh_E/exec";
     const CITIZENS = ["nyokki1958", "daran0289", "maikuraumai", "kenti7599", "SoftMusic096337", "TempOwl79825726", "SlightSum8834", "yutakabicchi", "shotaro shizoka", "Tankichi1", "Sora3055", "ShabbyRuby54641", "yuisyunn", "kiri5620", "xRqmuzzzL YT", "WoodedTuba82716", "atatan3", "Ezipt3697", "y3ur1lala", "Harukaze4006", "RinRin404040", "takubon0114", "ZeroPlayer1396", "K1hoOIE", "Hikaru bp", "kemi114", "PaltryCow795892", "haruson7856", "BleakDread23911", "FleeingRat43895", "Nnz0313", "shuji12324", "haruhi8395", "utte75877", "InlandVeil18339", "BlahColt4486", "kitune0510", "MIYUKI20107577", "HardPigeon4047", "PairedLand4913", "hiyorispyair", "DueMite4591", "yukiharu518817", "kouk9690", "Ram1117enter", "GCsTanzanite", "haha70473", "Raika6605", "hagetarouSP", "tesuteru", "tantanmendesu29", "Commander129632", "RINEshinki3030", "kanade0905", "mike32Ch", "xTZxJP"];
 
     let currentData = { products: [], orders: [] }; 
     let currentUser = JSON.parse(localStorage.getItem('daigoshu_user')) || null;
+
 
     async function placeOrder(seller, productName) {
         const buyer = prompt("あなたのMCIDを入力してください（注文者名として記録されます）");
@@ -198,24 +211,22 @@
         } catch (e) { alert("接続エラー"); }
     }
 
-
     function renderOrders() {
         const container = document.getElementById('received-orders');
         if (!currentUser || !container) return;
         const myOrders = (currentData.orders || []).filter(order => order.seller === currentUser.mcid);
         if (myOrders.length === 0) {
-            container.innerHTML = '<p style="font-size: 0.7rem; color: #666;">注文はありません。</p>';
+            container.innerHTML = '<p style="font-size: 0.7rem; color: #666;">現在、注文はありません。</p>';
             return;
         }
         container.innerHTML = myOrders.map(order => `
-            <div class="order-item" style="background:#1a1a1a; padding:10px; margin-bottom:5px; border-left:3px solid #ffaa00;">
+            <div class="order-item">
                 <div style="font-size:0.7rem; color:#888;">${order.timestamp}</div>
-                <div><b>${order.buyer}</b> から <b>${order.productName}</b></div>
-                <button onclick="deleteOrder('${order.id}')" style="color:#ff4444; background:none; border:none; cursor:pointer;">[完了して削除]</button>
+                <div><b>${order.buyer}</b> → ${order.productName}</div>
+                <button onclick="deleteOrder('${order.id}')" style="color:#ff4444; background:none; border:none; cursor:pointer; font-size:0.7rem; padding:0;">[完了・削除]</button>
             </div>
         `).join('');
     }
-
 
     async function submitTrade() {
         if (!currentUser) return;
@@ -232,14 +243,13 @@
         try {
             const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify(payload) });
             const result = await res.json();
-            if (result.status === "success") { alert("完了！"); loadTradeData(); }
+            if (result.status === "success") { alert("更新完了！"); loadTradeData(); }
             else { alert(result.message); }
         } catch (e) { alert("失敗"); }
     }
 
-
     async function deleteOrder(orderId) {
-        if (!confirm("削除しますか？")) return;
+        if (!confirm("取引完了として削除しますか？")) return;
         const payload = {
             action: "deleteOrder",
             orderId: orderId,
@@ -253,14 +263,13 @@
         } catch (e) { alert("削除失敗"); }
     }
 
-
     function checkAuth() {
         const loginForm = document.getElementById('login-form');
         const dashboard = document.getElementById('user-dashboard');
         if (currentUser) {
             loginForm.style.display = 'none';
             dashboard.style.display = 'block';
-            document.getElementById('welcome-msg').innerText = `ログイン中: ${currentUser.mcid}`;
+            document.getElementById('welcome-msg').innerText = `国民ID: ${currentUser.mcid}`;
             renderOrders();
         } else {
             loginForm.style.display = 'block';
@@ -287,8 +296,7 @@
         try {
             const res = await fetch(GAS_URL);
             const data = await res.json();
-            // GAS側のデータ構造（productsとorders）に合わせる
-            currentData.products = data.products || data;
+            currentData.products = data.products || [];
             currentData.orders = data.orders || [];
             renderTable();
             updateStats(currentData.products);
@@ -301,6 +309,7 @@
         const search = document.getElementById('search-box').value.toLowerCase();
         const sort = document.getElementById('sort-select').value;
         let filtered = currentData.products.filter(d => d.name.toLowerCase().includes(search) || d.seller.toLowerCase().includes(search));
+        
         if (sort === "price-asc") filtered.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
         else if (sort === "price-desc") filtered.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
 
@@ -309,7 +318,7 @@
                 <td><strong>${item.name}</strong></td>
                 <td class="price">${item.price} KD</td>
                 <td class="coordinate">${item.coords}</td>
-                <td>${item.stock}</td>
+                <td style="font-size:0.8rem;">${item.stock}</td>
                 <td class="seller-tag">${item.seller}</td>
                 <td><button class="btn-order" onclick="placeOrder('${item.seller}', '${item.name}')">注文</button></td>
             </tr>
@@ -330,7 +339,7 @@
 
     checkAuth();
     loadTradeData();
-    setInterval(loadTradeData, 30000);
+    setInterval(loadTradeData, 30000); 
 </script>
+</body>
 </html>
-

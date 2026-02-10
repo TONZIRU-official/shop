@@ -183,7 +183,7 @@
 </div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycby1gTvjw1A-vJGbVST7gfEokZJKboQUl6ShupEl8_D5Vc8XmejoXf8dqYPQ1UrnOocl9g/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxkVU8oi3yGtSV4rq2K2ug_NWzQoyaWElvfBZ-zeREic2sc4o9OeUhsiQvJpsbaOQObmw/exec";
     const CITIZENS = ["nyokki1958", "daran0289", "maikuraumai", "kenti7599", "SoftMusic096337", "TempOwl79825726", "SlightSum8834", "yutakabicchi", "shotaro shizoka", "Tankichi1", "Sora3055", "ShabbyRuby54641", "yuisyunn", "kiri5620", "xRqmuzzzL YT", "WoodedTuba82716", "atatan3", "Ezipt3697", "y3ur1lala", "Harukaze4006", "RinRin404040", "takubon0114", "ZeroPlayer1396", "K1hoOIE", "Hikaru bp", "kemi114", "PaltryCow795892", "haruson7856", "BleakDread23911", "FleeingRat43895", "Nnz0313", "shuji12324", "haruhi8395", "utte75877", "InlandVeil18339", "BlahColt4486", "kitune0510", "MIYUKI20107577", "HardPigeon4047", "PairedLand4913", "hiyorispyair", "DueMite4591", "yukiharu518817", "kouk9690", "Ram1117enter", "GCsTanzanite", "haha70473", "Raika6605", "hagetarouSP", "tesuteru", "tantanmendesu29", "Commander129632", "RINEshinki3030", "kanade0905", "mike32Ch", "xTZxJP"];
 
     const DAIGOSHU_NEWS = [
@@ -410,13 +410,35 @@
         }
     }
 
-    function login() {
+    async function login() {
         const mcid = document.getElementById('auth-mcid').value;
         const pass = document.getElementById('id-auth-pass').value;
-        if (!CITIZENS.includes(mcid)) { alert("国民リストにありません"); return; }
-        currentUser = { mcid, pass };
-        localStorage.setItem('daigoshu_user', JSON.stringify(currentUser));
-        checkAuth();
+    
+        if (!CITIZENS.includes(mcid)) { 
+            alert("国民リストにありません"); 
+            return; 
+        }
+    
+        try {
+            const res = await fetch(GAS_URL, {
+                method: "POST",
+                body: JSON.stringify({ 
+                    action: "loginCheck", 
+                    password: pass 
+                })
+            });
+            const result = await res.json();
+    
+            if (result.status === "success") {
+                currentUser = { mcid, pass };
+                localStorage.setItem('daigoshu_user', JSON.stringify(currentUser));
+                checkAuth();
+            } else {
+                alert("パスワードが間違っています。");
+            }
+        } catch (e) {
+            alert("認証中にエラーが発生しました。");
+        }
     }
 
     function logout() { localStorage.removeItem('daigoshu_user'); currentUser = null; checkAuth(); }
@@ -428,6 +450,7 @@
         setInterval(loadTradeData, 30000);
     };
 </script>
+
 
 
 

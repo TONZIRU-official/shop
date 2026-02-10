@@ -150,7 +150,13 @@
 
             <div id="user-dashboard">
                 <h2 style="color: var(--mc-gold);">⚒️ 管理パネル</h2>
-                <p id="welcome-msg" style="font-size: 0.8rem; color: var(--mc-aqua); margin-bottom: 10px;"></p>
+                <p id="welcome-msg" style="font-size: 0.8rem; color: var(--mc-aqua); margin-bottom: 5px;"></p>
+                
+                <div id="news-display" style="font-size: 0.75rem; background: #000; border: 1px dashed #444; padding: 10px; margin-bottom: 20px; color: #aaa; border-left: 3px solid var(--mc-gold);">
+                    読み込み中...
+                </div>
+                
+                <div class="input-group" style="margin-bottom: 20px;">
                 
                 <div class="input-group" style="margin-bottom: 20px;">
                     <h3 style="font-size: 0.8rem; color: #888; margin: 0;">新規出品・更新</h3>
@@ -180,16 +186,21 @@
     const GAS_URL = "https://script.google.com/macros/s/AKfycby1gTvjw1A-vJGbVST7gfEokZJKboQUl6ShupEl8_D5Vc8XmejoXf8dqYPQ1UrnOocl9g/exec";
     const CITIZENS = ["nyokki1958", "daran0289", "maikuraumai", "kenti7599", "SoftMusic096337", "TempOwl79825726", "SlightSum8834", "yutakabicchi", "shotaro shizoka", "Tankichi1", "Sora3055", "ShabbyRuby54641", "yuisyunn", "kiri5620", "xRqmuzzzL YT", "WoodedTuba82716", "atatan3", "Ezipt3697", "y3ur1lala", "Harukaze4006", "RinRin404040", "takubon0114", "ZeroPlayer1396", "K1hoOIE", "Hikaru bp", "kemi114", "PaltryCow795892", "haruson7856", "BleakDread23911", "FleeingRat43895", "Nnz0313", "shuji12324", "haruhi8395", "utte75877", "InlandVeil18339", "BlahColt4486", "kitune0510", "MIYUKI20107577", "HardPigeon4047", "PairedLand4913", "hiyorispyair", "DueMite4591", "yukiharu518817", "kouk9690", "Ram1117enter", "GCsTanzanite", "haha70473", "Raika6605", "hagetarouSP", "tesuteru", "tantanmendesu29", "Commander129632", "RINEshinki3030", "kanade0905", "mike32Ch", "xTZxJP"];
 
+    const DAIGOSHU_NEWS = [
+        "[ニュース]選挙が始まります。",
+        "【経済】人口６０人まであと３人"
+    ];
+
     let currentData = { products: [], orders: [] }; 
     let currentUser = JSON.parse(localStorage.getItem('daigoshu_user')) || null;
     let lastSubmitTime = 0;
     let marketChart = null; 
+    let correctAnswer = 0;
 
     async function loadTradeData() {
         try {
             const res = await fetch(GAS_URL + "?t=" + Date.now());
             const data = await res.json();
-            
             currentData.products = (data.products || []).map(p => ({
                 name: p.name || "---",
                 price: p.price || "0",
@@ -197,26 +208,22 @@
                 stock: p.stock || "不明",
                 seller: p.seller || "anonymous"
             }));
-            
             currentData.orders = data.orders || [];
             renderTable();
             updateStats(currentData.products);
             renderOrders();
-        } catch (e) { console.error("データ読み込み失敗", e); }
+        } catch (e) { console.error(e); }
     }
 
     function renderTable() {
         const tbody = document.getElementById('trade-tbody');
         const search = document.getElementById('search-box').value.toLowerCase();
         const sort = document.getElementById('sort-select').value;
-        
         let filtered = currentData.products.filter(d => 
             d.name.toLowerCase().includes(search) || d.seller.toLowerCase().includes(search)
         );
-        
         if (sort === "price-asc") filtered.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
         else if (sort === "price-desc") filtered.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
-
         tbody.innerHTML = filtered.map(item => `
             <tr>
                 <td><strong>${item.name}</strong></td>
@@ -228,6 +235,7 @@
             </tr>
         `).join('');
     }
+
     function updateStats(data) {
         const container = document.getElementById('stats-container');
         if(!container) return;
@@ -245,7 +253,6 @@
         const canvas = document.getElementById('marketChart');
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
-        
         const categories = { "食料": 0, "装備": 0, "素材": 0, "その他": 0 };
         data.forEach(p => {
             const n = p.name;
@@ -254,9 +261,7 @@
             else if (n.match(/石|インゴット|原石|ダイヤ|鉄|金|木/)) categories["素材"]++;
             else categories["その他"]++;
         });
-
         if (marketChart) marketChart.destroy();
-        
         marketChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
@@ -270,9 +275,7 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'bottom', labels: { color: '#eee', font: { size: 10 } } }
-                },
+                plugins: { legend: { position: 'bottom', labels: { color: '#eee', font: { size: 10 } } } },
                 cutout: '70%'
             }
         });
@@ -282,7 +285,6 @@
         if (!currentUser) return;
         const now = Date.now();
         if (now - lastSubmitTime < 20000) { alert("連投防止のため20秒待ってください"); return; }
-        
         const payload = {
             action: "updateProduct",
             seller: currentUser.mcid,
@@ -293,9 +295,7 @@
             stock: document.getElementById('in-stock').value,
             hp_field: document.getElementById('hp_field').value
         };
-
         if (!payload.name) return alert("商品名は必須です。");
-
         const btn = document.getElementById('submit-btn');
         try {
             btn.disabled = true; btn.innerText = "送信中...";
@@ -305,7 +305,7 @@
                 lastSubmitTime = Date.now();
                 alert("更新完了！");
                 loadTradeData();
-            } else { alert("エラー: " + result.message); }
+            } else { alert(result.message); }
         } catch (e) { alert("送信失敗"); } finally {
             btn.disabled = false; btn.innerText = "情報を登録・更新";
         }
@@ -349,58 +349,65 @@
             </div>
         `).join('');
     }
-　let correctAnswer = 0;
-function initTOS() {
-    const hasAgreed = localStorage.getItem('daigoshu_agreed');
-    const modal = document.getElementById('tos-modal');
-    const content = document.getElementById('tos-content');
-    
-    if (!hasAgreed) {
-        modal.style.display = 'flex';
-        content.onscroll = function() {
-            if (content.scrollHeight - content.scrollTop <= content.clientHeight + 5) {
-                showBotCheck();
-            }
-        };
-    }
-}
 
-function showBotCheck() {
-    const area = document.getElementById('bot-check-area');
-    const btn = document.getElementById('tos-agree-btn');
-    if (area.style.display === 'block') return; 
-    const n1 = Math.floor(Math.random() * 10) + 1;
-    const n2 = Math.floor(Math.random() * 10) + 1;
-    correctAnswer = n1 + n2;
-    document.getElementById('math-question').innerText = `${n1} + ${n2}`;
-    
-    area.style.display = 'block';
-    btn.disabled = false;
-    btn.innerText = "同意してサイトを開く";
-    btn.style.background = "var(--mc-gold)";
-    btn.style.color = "#000";
-    btn.style.cursor = "pointer";
-}
-function verifyAndAccept() {
-    const userAnswer = document.getElementById('math-answer').value;
-    if (parseInt(userAnswer) === correctAnswer) {
-        localStorage.setItem('daigoshu_agreed', 'true'); 
-        document.getElementById('tos-modal').style.display = 'none';
-        alert("大豪州共和国へようこそ！規約に同意しました。");
-    } else {
-        alert("計算が違います。もう一度確認してください。");
+    function initTOS() {
+        const hasAgreed = localStorage.getItem('daigoshu_agreed');
+        const modal = document.getElementById('tos-modal');
+        const content = document.getElementById('tos-content');
+        if (!hasAgreed) {
+            modal.style.display = 'flex';
+            content.onscroll = function() {
+                if (content.scrollHeight - content.scrollTop <= content.clientHeight + 5) {
+                    showBotCheck();
+                }
+            };
+        }
     }
-}
-window.addEventListener('load', initTOS);
+
+    function showBotCheck() {
+        const area = document.getElementById('bot-check-area');
+        const btn = document.getElementById('tos-agree-btn');
+        if (area.style.display === 'block') return; 
+        const n1 = Math.floor(Math.random() * 10) + 1;
+        const n2 = Math.floor(Math.random() * 10) + 1;
+        correctAnswer = n1 + n2;
+        document.getElementById('math-question').innerText = `${n1} + ${n2}`;
+        area.style.display = 'block';
+        btn.disabled = false;
+        btn.innerText = "同意してサイトを開く";
+        btn.style.background = "var(--mc-gold)";
+        btn.style.color = "#000";
+        btn.style.cursor = "pointer";
+    }
+
+    function verifyAndAccept() {
+        const userAnswer = document.getElementById('math-answer').value;
+        if (parseInt(userAnswer) === correctAnswer) {
+            localStorage.setItem('daigoshu_agreed', 'true'); 
+            document.getElementById('tos-modal').style.display = 'none';
+            alert("大豪州共和国へようこそ！規約に同意しました。");
+        } else {
+            alert("計算が違います。");
+        }
+    }
+
     function checkAuth() {
         const loginForm = document.getElementById('login-form');
         const dashboard = document.getElementById('user-dashboard');
+        const welcomeMsg = document.getElementById('welcome-msg');
         if (currentUser) {
-            loginForm.style.display = 'none'; dashboard.style.display = 'block';
-            document.getElementById('welcome-msg').innerText = `国民ID: ${currentUser.mcid}`;
+            loginForm.style.display = 'none';
+            dashboard.style.display = 'block';
+            welcomeMsg.innerText = `国民ID: ${currentUser.mcid}`;
+            const randomNews = DAIGOSHU_NEWS[Math.floor(Math.random() * DAIGOSHU_NEWS.length)];
+            const newsArea = document.getElementById('news-display');
+            if (newsArea) {
+                newsArea.innerHTML = `<span style="color:var(--mc-gold);">[NEWS]</span> ${randomNews}`;
+            }
             renderOrders();
         } else {
-            loginForm.style.display = 'block'; dashboard.style.display = 'none';
+            loginForm.style.display = 'block';
+            dashboard.style.display = 'none';
         }
     }
 
@@ -415,8 +422,14 @@ window.addEventListener('load', initTOS);
 
     function logout() { localStorage.removeItem('daigoshu_user'); currentUser = null; checkAuth(); }
 
-    checkAuth(); loadTradeData(); setInterval(loadTradeData, 30000);
+    window.onload = () => {
+        initTOS();
+        checkAuth();
+        loadTradeData();
+        setInterval(loadTradeData, 30000);
+    };
 </script>
+
 
 
 

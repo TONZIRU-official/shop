@@ -79,6 +79,29 @@
 
 <header class="header"><h1>大豪州 商品情報</h1></header>
 
+<div id="tos-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:9999; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:#111; border:2px solid var(--mc-gold); padding:25px; border-radius:10px; max-width:500px; width:100%; box-shadow: 0 0 30px rgba(255,170,0,0.3);">
+        <h2 style="color:var(--mc-gold); margin-top:0;">📜 大豪州 貿易利用規約</h2>
+        
+        <div id="tos-content" style="height:250px; overflow-y:auto; background:#000; padding:15px; font-size:0.85rem; border:1px solid #333; margin-bottom:15px; color:#bbb;">
+            <p><strong>第1条：</strong> 本サイトでの出品は、大豪州共和国の国民専用です。</p>
+            <p><strong>第2条：</strong> 荒らし目的の注文や、虚偽の出品を禁じます。これに違反した場合、サイトの利用を禁止する可能性があります。</p>
+            <p><strong>第3条：</strong> 取引は自己責任で行ってください。アイテム紛失等の補償を行いません。</p>
+            <p><strong>第4条：</strong> 荒らしが発覚した場合は当該者のIPを取得いたします。</p>
+            <p><strong>第5条：</strong> 注文を行った者は、速やかに出品者と連絡を取り、取引を完結させる義務を負います。</p>
+            <p><strong>第6条：</strong> 商品名や出品者名に不適切な表現（誹謗中傷や差別的な内容）が含まれる場合、運営の判断で予告なく削除いたします。</p>
+            <p style="color:var(--mc-aqua); text-align:center;">--- 規約はここまでです。最後まで読んでください ---</p>
+        </div>
+
+        <div id="bot-check-area" style="display:none; background:#222; padding:15px; border-radius:5px; margin-bottom:15px; text-align:center;">
+            <label style="font-size:0.8rem; color:var(--mc-gold);">🛡️ Bot対策： <span id="math-question"></span> = ?</label><br>
+            <input type="number" id="math-answer" style="width:80px; margin-top:10px; text-align:center;" placeholder="回答">
+        </div>
+
+        <button id="tos-agree-btn" disabled onclick="verifyAndAccept()" style="width:100%; padding:12px; background:#444; color:#888; border:none; cursor:not-allowed; font-weight:bold;">一番下までスクロールしてください</button>
+    </div>
+</div>
+    
 <div class="main-container">
     <main>
         <section id="stats-panel">
@@ -326,7 +349,49 @@
             </div>
         `).join('');
     }
+　let correctAnswer = 0;
+function initTOS() {
+    const hasAgreed = localStorage.getItem('daigoshu_agreed');
+    const modal = document.getElementById('tos-modal');
+    const content = document.getElementById('tos-content');
+    
+    if (!hasAgreed) {
+        modal.style.display = 'flex';
+        content.onscroll = function() {
+            if (content.scrollHeight - content.scrollTop <= content.clientHeight + 5) {
+                showBotCheck();
+            }
+        };
+    }
+}
 
+function showBotCheck() {
+    const area = document.getElementById('bot-check-area');
+    const btn = document.getElementById('tos-agree-btn');
+    if (area.style.display === 'block') return; 
+    const n1 = Math.floor(Math.random() * 10) + 1;
+    const n2 = Math.floor(Math.random() * 10) + 1;
+    correctAnswer = n1 + n2;
+    document.getElementById('math-question').innerText = `${n1} + ${n2}`;
+    
+    area.style.display = 'block';
+    btn.disabled = false;
+    btn.innerText = "同意してサイトを開く";
+    btn.style.background = "var(--mc-gold)";
+    btn.style.color = "#000";
+    btn.style.cursor = "pointer";
+}
+function verifyAndAccept() {
+    const userAnswer = document.getElementById('math-answer').value;
+    if (parseInt(userAnswer) === correctAnswer) {
+        localStorage.setItem('daigoshu_agreed', 'true'); 
+        document.getElementById('tos-modal').style.display = 'none';
+        alert("大豪州共和国へようこそ！規約に同意しました。");
+    } else {
+        alert("計算が違います。もう一度確認してください。");
+    }
+}
+window.addEventListener('load', initTOS);
     function checkAuth() {
         const loginForm = document.getElementById('login-form');
         const dashboard = document.getElementById('user-dashboard');
@@ -352,6 +417,7 @@
 
     checkAuth(); loadTradeData(); setInterval(loadTradeData, 30000);
 </script>
+
 
 
 

@@ -73,6 +73,7 @@
         #login-form, #user-dashboard { display: none; }
         @media (max-width: 900px) { .main-container { grid-template-columns: 1fr; } .auth-panel { position: static; } }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -82,7 +83,16 @@
     <main>
         <section id="stats-panel">
             <h2 style="color: var(--mc-aqua);">📊 市場流通ステータス</h2>
-            <div id="stats-container"></div>
+            <div style="display: flex; flex-wrap: wrap; gap: 30px; align-items: center; justify-content: space-around;">
+                <div id="stats-container" style="flex: 1; min-width: 250px;"></div>
+                
+                <div style="width: 220px; height: 220px; position: relative;">
+                    <canvas id="marketChart"></canvas>
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none;">
+                        <span style="font-size: 0.7rem; color: #888;">CATEGORY</span>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <section>
@@ -150,6 +160,8 @@
     let currentData = { products: [], orders: [] }; 
     let currentUser = JSON.parse(localStorage.getItem('daigoshu_user')) || null;
     let lastSubmitTime = 0;
+    let marketChart = null; 
+
     async function loadTradeData() {
         try {
             const res = await fetch(GAS_URL + "?t=" + Date.now());
@@ -193,6 +205,56 @@
             </tr>
         `).join('');
     }
+    function updateStats(data) {
+        const container = document.getElementById('stats-container');
+        if(!container) return;
+        const counts = { "在庫あり": { n: 0, c: "#3cfb00" }, "在庫僅少": { n: 0, c: "#ffaa00" }, "受注生産": { n: 0, c: "#55ffff" } };
+        data.forEach(d => { if(counts[d.stock]) counts[d.stock].n++; });
+        container.innerHTML = Object.keys(counts).map(key => {
+            const val = counts[key];
+            const prc = data.length > 0 ? Math.round((val.n / data.length) * 100) : 0;
+            return `<div class="stats-item"><span>${key} (${val.n}件)</span><div class="bar-bg"><div class="bar-fill" style="width:${prc}%; background:${val.c};"></div></div></div>`;
+        }).join('');
+        renderChart(data);
+    }
+
+    function renderChart(data) {
+        const canvas = document.getElementById('marketChart');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        
+        const categories = { "食料": 0, "装備": 0, "素材": 0, "その他": 0 };
+        data.forEach(p => {
+            const n = p.name;
+            if (n.match(/肉|食|パン|芋|ポテト|金リンゴ/)) categories["食料"]++;
+            else if (n.match(/剣|防具|ツール|本|弓|矢|兜|鎧/)) categories["装備"]++;
+            else if (n.match(/石|インゴット|原石|ダイヤ|鉄|金|木/)) categories["素材"]++;
+            else categories["その他"]++;
+        });
+
+        if (marketChart) marketChart.destroy();
+        
+        marketChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(categories),
+                datasets: [{
+                    data: Object.values(categories),
+                    backgroundColor: ['#ff4444', '#55ffff', '#ffaa00', '#444444'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#eee', font: { size: 10 } } }
+                },
+                cutout: '70%'
+            }
+        });
+    }
+
     async function submitTrade() {
         if (!currentUser) return;
         const now = Date.now();
@@ -251,18 +313,6 @@
         } catch (e) { alert("削除失敗"); }
     }
 
-    function updateStats(data) {
-        const container = document.getElementById('stats-container');
-        if(!container) return;
-        const counts = { "在庫あり": { n: 0, c: "#3cfb00" }, "在庫僅少": { n: 0, c: "#ffaa00" }, "受注生産": { n: 0, c: "#55ffff" } };
-        data.forEach(d => { if(counts[d.stock]) counts[d.stock].n++; });
-        container.innerHTML = Object.keys(counts).map(key => {
-            const val = counts[key];
-            const prc = data.length > 0 ? Math.round((val.n / data.length) * 100) : 0;
-            return `<div class="stats-item"><span>${key} (${val.n}件)</span><div class="bar-bg"><div class="bar-fill" style="width:${prc}%; background:${val.c};"></div></div></div>`;
-        }).join('');
-    }
-
     function renderOrders() {
         const container = document.getElementById('received-orders');
         if (!currentUser || !container) return;
@@ -302,5 +352,6 @@
 
     checkAuth(); loadTradeData(); setInterval(loadTradeData, 30000);
 </script>
+
 
 

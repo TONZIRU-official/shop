@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="google-site-verification" content="SxzZn87uR4TBl9SPhOZBWG9xDWxWMQ-BYZpEGILwAwY" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>大豪州共和国 商品情報</title>
+    <title>大豪州共和国 商品情報 | マイクラ貿易ポータル</title>
     <meta name="description" content="大豪州共和国の商品情報ポータルサイトです。国民の出品情報をリアルタイムで公開中。">
+    <meta name="keywords" content="大豪州, 大豪州共和国, マイクラ, Minecraft, 貿易, かろEarth, 注文, ポータルサイト, ショッピング, 国民, 出品">
+    <meta name="author" content="大豪州共和国 貿易局">
     <style>
         :root {
             --mc-green: #3cfb00;
@@ -81,7 +83,7 @@
 
 <div id="tos-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:9999; align-items:center; justify-content:center; padding:20px;">
     <div style="background:#111; border:2px solid var(--mc-gold); padding:25px; border-radius:10px; max-width:500px; width:100%; box-shadow: 0 0 30px rgba(255,170,0,0.3);">
-        <h2 style="color:var(--mc-gold); margin-top:0;">📜 大豪州 貿易利用規約</h2>
+        <h2 style="color:var(--mc-gold); margin-top:0;">📜 利用規約</h2>
         
         <div id="tos-content" style="height:250px; overflow-y:auto; background:#000; padding:15px; font-size:0.85rem; border:1px solid #333; margin-bottom:15px; color:#bbb;">
             <p><strong>第1条：</strong> 本サイトでの出品は、大豪州共和国の国民専用です。</p>
@@ -156,7 +158,12 @@
                     読み込み中...
                 </div>
                 
-                <div class="input-group" style="margin-bottom: 20px;">
+                <div style="margin-bottom: 20px; border: 1px solid #444; padding: 10px; background: rgba(0,0,0,0.2);">
+                    <h3 style="font-size: 0.8rem; color: var(--mc-aqua); margin: 0 0 10px 0; border-bottom: 1px solid #444;">📦 あなたの出品物</h3>
+                    <div id="my-products-container">
+                        <p style="font-size: 0.7rem; color: #666;">読み込み中...</p>
+                    </div>
+                </div>                
                 
                 <div class="input-group" style="margin-bottom: 20px;">
                     <h3 style="font-size: 0.8rem; color: #888; margin: 0;">新規出品・更新</h3>
@@ -183,7 +190,7 @@
 </div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbxkVU8oi3yGtSV4rq2K2ug_NWzQoyaWElvfBZ-zeREic2sc4o9OeUhsiQvJpsbaOQObmw/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycby5Ff6UakDgmDYVKciIOiMmEGdfZ8T4vxOeIK53nqDrJuaMICKSebKoc79BqoW16OPPOw/exec";
     const CITIZENS = ["nyokki1958", "daran0289", "maikuraumai", "kenti7599", "SoftMusic096337", "TempOwl79825726", "SlightSum8834", "yutakabicchi", "shotaro shizoka", "Tankichi1", "Sora3055", "ShabbyRuby54641", "yuisyunn", "kiri5620", "xRqmuzzzL YT", "WoodedTuba82716", "atatan3", "Ezipt3697", "y3ur1lala", "Harukaze4006", "RinRin404040", "takubon0114", "ZeroPlayer1396", "K1hoOIE", "Hikaru bp", "kemi114", "PaltryCow795892", "haruson7856", "BleakDread23911", "FleeingRat43895", "Nnz0313", "shuji12324", "haruhi8395", "utte75877", "InlandVeil18339", "BlahColt4486", "kitune0510", "MIYUKI20107577", "HardPigeon4047", "PairedLand4913", "hiyorispyair", "DueMite4591", "yukiharu518817", "kouk9690", "Ram1117enter", "GCsTanzanite", "haha70473", "Raika6605", "hagetarouSP", "tesuteru", "tantanmendesu29", "Commander129632", "RINEshinki3030", "kanade0905", "mike32Ch", "xTZxJP"];
 
     const DAIGOSHU_NEWS = [
@@ -208,9 +215,11 @@
                 seller: p.seller || "anonymous"
             }));
             currentData.orders = data.orders || [];
+            
             renderTable();
             updateStats(currentData.products);
             renderOrders();
+            renderMyProducts(); 
         } catch (e) { console.error(e); }
     }
 
@@ -310,6 +319,48 @@
         }
     }
 
+    function renderMyProducts() {
+        const container = document.getElementById('my-products-container');
+        if (!currentUser || !container) return;
+        const myProds = currentData.products.filter(p => p.seller === currentUser.mcid);
+        
+        if (myProds.length === 0) {
+            container.innerHTML = '<p style="color: #666; font-size: 0.7rem;">現在出品している商品はありません。</p>';
+            return;
+        }
+
+        container.innerHTML = myProds.map(p => `
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding: 5px 0;">
+                <span style="font-size: 0.75rem;">${p.name} (${p.price}KD)</span>
+                <div>
+                    <button onclick="editProduct('${p.name}', '${p.price}', '${p.coords}', '${p.stock}')" style="color:var(--mc-aqua); background:none; border:1px solid var(--mc-aqua); cursor:pointer; font-size:0.6rem; padding: 1px 4px; border-radius: 2px; margin-right:5px;">編集</button>
+                    <button onclick="deleteProduct('${p.name}')" style="color:#ff4444; background:none; border:1px solid #ff4444; cursor:pointer; font-size:0.6rem; padding: 1px 4px; border-radius: 2px;">削除</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function editProduct(name, price, coords, stock) {
+        document.getElementById('in-name').value = name;
+        document.getElementById('in-price').value = price;
+        document.getElementById('in-coords').value = coords;
+        document.getElementById('in-stock').value = stock;
+        document.getElementById('in-name').focus();
+        document.getElementById('submit-btn').innerText = "修正を保存する";
+    }
+
+    async function deleteProduct(name) {
+        if (!confirm(`「${name}」の出品を削除しますか？`)) return;
+        try {
+            const res = await fetch(GAS_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "deleteProduct", name, seller: currentUser.mcid, password: currentUser.pass })
+            });
+            const result = await res.json();
+            if (result.status === "success") { alert("削除完了"); loadTradeData(); }
+        } catch (e) { alert("削除失敗"); }
+    }
+
     async function placeOrder(seller, productName) {
         const buyer = prompt("あなたのMCIDを入力してください");
         if (!buyer) return;
@@ -404,6 +455,7 @@
                 newsArea.innerHTML = `<span style="color:var(--mc-gold);">[NEWS]</span> ${randomNews}`;
             }
             renderOrders();
+            renderMyProducts(); 
         } else {
             loginForm.style.display = 'block';
             dashboard.style.display = 'none';
@@ -450,11 +502,5 @@
         setInterval(loadTradeData, 30000);
     };
 </script>
-
-
-
-
-
-
-
-
+</body>
+</html>
